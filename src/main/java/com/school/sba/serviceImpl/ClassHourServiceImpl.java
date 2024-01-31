@@ -264,7 +264,6 @@ public class ClassHourServiceImpl implements ClassHourService {
 			else {
 				throw new TeacherNotFoundByIdException("teacher not found");
 			}
-
 		}
 		return ResponseEntityProxy.setResponseStructure(HttpStatus.OK,
 				"class hour updated successfully",

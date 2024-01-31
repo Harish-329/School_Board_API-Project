@@ -120,8 +120,16 @@ public class ScheduleServiceImpl implements ScheduleService{
 							mapToScheduleResponse(schedule));
 				})
 				.orElseThrow(() -> new ScheduleNotFoundException("schedule not found"));
-
 	}
 
+	
+//	public void deleteSchedule(Schedule schedule) {
+//		Schedule schedule2 = scheduleRepository.findById(schedule.getScheduleId())
+//		.map(fetchedSchedule -> {
+//			scheduleRepository.delete(fetchedSchedule);
+//			return fetchedSchedule;
+//		})
+//		.orElseThrow(() -> new ScheduleNotFoundException("schedule not found"));
+//	}
 
 }

@@ -3,6 +3,7 @@
 import java.time.DayOfWeek;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -37,7 +38,9 @@ public class School {
 	@Enumerated(EnumType.STRING)
 	private DayOfWeek weekOffDay;
 	
-	@OneToOne
+	private boolean isDeleted;
+	
+	@OneToOne(cascade = CascadeType.REMOVE)
 	private Schedule schedule;
 	
 	@OneToMany(mappedBy = "school")

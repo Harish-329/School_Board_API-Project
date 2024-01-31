@@ -10,8 +10,10 @@ public interface SchoolService {
 
 	ResponseEntity<ResponseStructure<SchoolResponse>> createSchool(SchoolRequest schoolRequest);
 	
-	ResponseEntity<ResponseStructure<SchoolResponse>> updateSchool(SchoolRequest schoolRequest);
+	ResponseEntity<ResponseStructure<SchoolResponse>> updateSchool(int schoolId, SchoolRequest schoolRequest);
 
-	ResponseEntity<ResponseStructure<SchoolResponse>> findSchool();
+	ResponseEntity<ResponseStructure<SchoolResponse>> findSchool(int schoolId);
+
+	ResponseEntity<ResponseStructure<SchoolResponse>> softDeleteSchool(int schoolId);
 
 }

@@ -18,12 +18,15 @@ import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AcademicProgramNotFoundException;
 import com.school.sba.exception.AdminAlreadyFoundException;
 import com.school.sba.exception.AdminCannotBeAssignedToAcademicProgram;
+import com.school.sba.exception.AdminCannotBeDeletedException;
 import com.school.sba.exception.AdminNotFoundException;
 import com.school.sba.exception.InvalidUserRoleException;
+import com.school.sba.exception.NoAssociatedObjectsFoundException;
 import com.school.sba.exception.OnlyTeacherCanBeAssignedToSubjectException;
 import com.school.sba.exception.SubjectNotFoundException;
 import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.AcademicProgramRepository;
+import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.SubjectRepository;
 import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.UserRequest;
@@ -31,6 +34,8 @@ import com.school.sba.responsedto.UserResponse;
 import com.school.sba.service.UserService;
 import com.school.sba.util.ResponseEntityProxy;
 import com.school.sba.util.ResponseStructure;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -47,6 +52,8 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	private SubjectRepository subjectRepository;
 
+	@Autowired
+	private ClassHourRepository classHourRepository;
 
 	private User mapToUser(UserRequest userRequest) {
 		return User.builder().userName(userRequest.getUserName())
@@ -119,7 +126,6 @@ public class UserServiceImpl implements UserService {
 		else {
 			throw new AdminNotFoundException("admin not found");
 		}
-
 	}
 
 
@@ -173,11 +179,15 @@ public class UserServiceImpl implements UserService {
 
 
 	@Override
-	public ResponseEntity<ResponseStructure<UserResponse>> deleteUser(int userId) {
+	public ResponseEntity<ResponseStructure<UserResponse>> softDeleteUser(int userId) {
 		return userRepository.findById(userId)
 				.map(user -> {
 					if(user.isDeleted()) {
 						throw new UserNotFoundByIdException("User already deleted");
+					}
+					
+					if(user.getUserRole().equals(UserRole.ADMIN)) {
+						throw new AdminCannotBeDeletedException("admin cannot be deleted");
 					}
 
 					user.setDeleted(true);
@@ -305,27 +315,46 @@ public class UserServiceImpl implements UserService {
 						throw new IllegalArgumentException("admin cannot be fetched");
 
 					if(EnumSet.allOf(UserRole.class).contains(roleOfUser)){
-						List<User> users = userRepository.findAllByUserRole(roleOfUser);
 
-						List<User> listOfUsers = new ArrayList<User>();
+						List<UserResponse> collect = userRepository.
+								findByUserRoleAndListOfAcademicPrograms(roleOfUser, academicProgram)
+								.stream()
+								.map(this::mapToUserResponse)
+								.collect(Collectors.toList());
 
-						users.forEach(user -> {
-							if(user.getListOfAcademicPrograms().contains(academicProgram)){
-								listOfUsers.add(user);
-							}
-						});
-						
-						List<UserResponse> collect = listOfUsers.stream()
-						.map(this::mapToUserResponse)
-						.collect(Collectors.toList());
-
-						return ResponseEntityProxy.setResponseStructure(HttpStatus.FOUND,
-								"list of " + userRole + " found successfully",
-								collect);
+						if(collect.isEmpty()) {
+							throw new NoAssociatedObjectsFoundException("academic program not found with "+programId+" and userrole with "+userRole);
+						}
+						else {
+							return ResponseEntityProxy.setResponseStructure(HttpStatus.FOUND,
+									"list of " + userRole + " found successfully",
+									collect);
+						}
 					}
-					return null;
-
+					else {
+						throw new InvalidUserRoleException("user role is incorrect");
+					}
 				})
 				.orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));
 	}
+
+	@Transactional
+	public void hardDeleteUser() {
+		
+		userRepository.findByIsDeleted(true).forEach(user -> {
+			
+			user.getListOfAcademicPrograms().forEach(ap -> {
+				ap.setListOfUsers(null);
+			});
+			
+			classHourRepository.findByUser(user).forEach(classHour -> {
+				classHour.setUser(null);
+			});
+			
+			userRepository.delete(user);
+			
+		});
+		
+	}
+
 }

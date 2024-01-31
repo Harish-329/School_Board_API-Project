@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.school.sba.entity.User;
+import com.school.sba.exception.UserNotFoundException;
 
 public class CustomUserDetail implements UserDetails{
 
@@ -19,6 +20,9 @@ public class CustomUserDetail implements UserDetails{
 	private User user;
 	
 	public CustomUserDetail(User user) {
+		if(user.isDeleted() == true) {
+			throw new UserNotFoundException("user not found");
+		}
 		this.user = user;
 	}
 

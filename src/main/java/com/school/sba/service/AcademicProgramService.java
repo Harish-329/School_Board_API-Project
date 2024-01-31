@@ -15,4 +15,6 @@ public interface AcademicProgramService {
 
 	ResponseEntity<ResponseStructure<List<AcademicProgramResponse>>> findAllAcademicProgram(int schoolId);
 
+	ResponseEntity<ResponseStructure<AcademicProgramResponse>> softDeleteAcademicProgram(int programId);
+
 }

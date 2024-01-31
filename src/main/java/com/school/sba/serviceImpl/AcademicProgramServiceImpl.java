@@ -13,15 +13,19 @@ import org.springframework.stereotype.Service;
 import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.Subject;
 import com.school.sba.enums.ProgramType;
+import com.school.sba.exception.AcademicProgramNotFoundException;
 import com.school.sba.exception.InvalidProgramTypeException;
 import com.school.sba.exception.SchoolNotFoundException;
 import com.school.sba.repository.AcademicProgramRepository;
+import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.SchoolRepository;
 import com.school.sba.requestdto.AcademicProgramRequest;
 import com.school.sba.responsedto.AcademicProgramResponse;
 import com.school.sba.service.AcademicProgramService;
 import com.school.sba.util.ResponseEntityProxy;
 import com.school.sba.util.ResponseStructure;
+
+import jakarta.transaction.Transactional;
 
 
 @Service
@@ -32,6 +36,9 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 
 	@Autowired
 	private SchoolRepository schoolRepository;
+	
+	@Autowired
+	private ClassHourRepository classHourRepository;
 
 	public AcademicProgramResponse mapToAcademicProgramResponse(AcademicProgram academicProgram) {
 
@@ -117,6 +124,35 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 					}
 				})
 				.orElseThrow(() -> new SchoolNotFoundException("school not found"));
+	}
+
+	@Override
+	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> softDeleteAcademicProgram(int programId) {
+		
+		return academicProgramRepository.findById(programId)
+				.map(academicProgram -> {
+					if(academicProgram.isDeleted()==true)
+						throw new AcademicProgramNotFoundException("academic program not found");
+					
+					academicProgram.setDeleted(true);
+					academicProgramRepository.save(academicProgram);
+
+					return ResponseEntityProxy.setResponseStructure(HttpStatus.OK,
+							"academic program deleted successfully",
+							mapToAcademicProgramResponse(academicProgram));
+				})
+				.orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));
+	}
+
+	@Transactional
+	public void hardDeleteAcademicProgram() {
+		
+		academicProgramRepository.findByIsDeleted(true).forEach(academicProgram -> {
+			classHourRepository.deleteAll(academicProgram.getListOfClassHours());
+			
+			academicProgramRepository.delete(academicProgram);
+		});
+		
 	}
 
 

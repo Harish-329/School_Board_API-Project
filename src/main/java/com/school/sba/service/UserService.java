@@ -14,7 +14,7 @@ public interface UserService {
 
 	ResponseEntity<ResponseStructure<UserResponse>> findUser(Integer userId);
 
-	ResponseEntity<ResponseStructure<UserResponse>> deleteUser(int userId);
+	ResponseEntity<ResponseStructure<UserResponse>> softDeleteUser(int userId);
 
 	ResponseEntity<ResponseStructure<UserResponse>> updateUser(int userId, UserRequest userRequest);
 

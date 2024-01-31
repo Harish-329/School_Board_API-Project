@@ -40,6 +40,8 @@ public class AcademicProgram {
 	private LocalDate programBeginsAt;
 	private LocalDate programEndsAt;
 	
+	private boolean isDeleted;
+	
 	@ManyToOne
 	@JoinColumn(name = "schoolId")
 	private School school;
