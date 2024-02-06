@@ -54,6 +54,25 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private ClassHourRepository classHourRepository;
+	
+	@Transactional
+	public void hardDeleteUser() {
+		
+		userRepository.findByIsDeleted(true).forEach(user -> {
+			
+			user.getListOfAcademicPrograms().forEach(ap -> {
+				ap.setListOfUsers(null);
+			});
+			
+			classHourRepository.findByUser(user).forEach(classHour -> {
+				classHour.setUser(null);
+			});
+			
+			userRepository.delete(user);
+			
+		});
+		
+	}
 
 	private User mapToUser(UserRequest userRequest) {
 		return User.builder().userName(userRequest.getUserName())
@@ -61,15 +80,14 @@ public class UserServiceImpl implements UserService {
 				.userFirstName(userRequest.getUserFirstName())
 				.userLastName(userRequest.getUserLastName())
 				.userEmail(userRequest.getUserEmail())
-				.userContact(userRequest.getUserContact())
+				.userContact(Long.parseLong(userRequest.getUserContact()))
 				.userRole(UserRole.valueOf(userRequest.getUserRole().toUpperCase()))
-				.school(userRequest.getSchool())
 				.build();
 	}
 
 
 
-	public UserResponse mapToUserResponse(User user) {
+	private UserResponse mapToUserResponse(User user) {
 
 		List<String> listOfProgramName = new ArrayList<>();
 
@@ -338,23 +356,6 @@ public class UserServiceImpl implements UserService {
 				.orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));
 	}
 
-	@Transactional
-	public void hardDeleteUser() {
-		
-		userRepository.findByIsDeleted(true).forEach(user -> {
-			
-			user.getListOfAcademicPrograms().forEach(ap -> {
-				ap.setListOfUsers(null);
-			});
-			
-			classHourRepository.findByUser(user).forEach(classHour -> {
-				classHour.setUser(null);
-			});
-			
-			userRepository.delete(user);
-			
-		});
-		
-	}
+	
 
 }

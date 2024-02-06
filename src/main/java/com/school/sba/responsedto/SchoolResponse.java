@@ -1,7 +1,5 @@
 package com.school.sba.responsedto;
 
-import java.time.DayOfWeek;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,5 +17,4 @@ public class SchoolResponse {
 	private long schoolContactNumber;
 	private String schoolEmailId;
 	private String schoolAddress;
-	private DayOfWeek weekOfDay;
 }

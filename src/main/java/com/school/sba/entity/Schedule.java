@@ -23,7 +23,7 @@ public class Schedule {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer scheduleId;
+	private int scheduleId;
 	private LocalTime opensAt;
 	private LocalTime closesAt;
 	private int classHoursPerDay;

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.school.sba.enums.UserRole;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -33,16 +34,16 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer userId;
 	
-//	@Column(unique = true)
+	@Column(unique = true)
 	private String userName;
 	private String userPassword;
 	private String userFirstName;
 	private String userLastName;
 	
-//	@Column(unique = true)
+	@Column(unique = true)
 	private Long userContact;
 	
-//	@Column(unique = true)
+	@Column(unique = true)
 	private String userEmail;
 	
 	private boolean isDeleted;

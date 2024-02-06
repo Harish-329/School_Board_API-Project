@@ -1,7 +1,6 @@
 package com.school.sba.serviceImpl;
 
-import java.time.DayOfWeek;
-import java.util.EnumSet;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,15 +8,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.School;
 import com.school.sba.enums.UserRole;
-import com.school.sba.exception.InvalidWeekDayException;
 import com.school.sba.exception.SchoolAlreadyPresentException;
 import com.school.sba.exception.SchoolCannotBeCreatedException;
 import com.school.sba.exception.SchoolNotFoundException;
 import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.AcademicProgramRepository;
-import com.school.sba.repository.ScheduleRepository;
+import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.SchoolRepository;
 import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.SchoolRequest;
@@ -37,20 +36,42 @@ public class SchoolServiceImpl implements SchoolService{
 
 	@Autowired
 	private UserRepository userRepo;
-
+	
 	@Autowired
-	private ScheduleRepository scheduleRepository;
+	private ClassHourRepository classHourRepository;
 
 	@Autowired
 	private AcademicProgramRepository academicProgramRepository;
+	
+	@Transactional
+	public void hardDeleteSchool() {
+		
+		schoolRepo.findByIsDeleted(true).forEach(school -> {
+			
+			List<AcademicProgram> listOfAcademicPrograms = school.getListOfAcademicPrograms();
+			
+			listOfAcademicPrograms.forEach(academicProgram -> {
+				classHourRepository.deleteAll(academicProgram.getListOfClassHours());
+				academicProgramRepository.delete(academicProgram);
+			});
+			
+			userRepo.findBySchool(school).forEach(user -> {
+				if(!user.getUserRole().equals(UserRole.ADMIN)) {
+					userRepo.delete(user);
+				}
+			});
+			
+			schoolRepo.delete(school);
+		});
+		
+	}
 
 	private School mapToSchool(SchoolRequest schoolRequest) {
 		return School.builder()
 				.schoolName(schoolRequest.getSchoolName())
 				.schoolEmailId(schoolRequest.getSchoolEmailId())
-				.schoolContactNumber(schoolRequest.getSchoolContactNumber())
+				.schoolContactNumber(Long.parseLong(schoolRequest.getSchoolContactNumber()))
 				.schoolAddress(schoolRequest.getSchoolAddress())
-				.weekOffDay(DayOfWeek.valueOf(schoolRequest.getWeekOffDay().toUpperCase()))
 				.build();
 	}
 
@@ -61,7 +82,6 @@ public class SchoolServiceImpl implements SchoolService{
 				.schoolEmailId(school.getSchoolEmailId())
 				.schoolContactNumber(school.getSchoolContactNumber())
 				.schoolAddress(school.getSchoolAddress())
-				.weekOfDay(school.getWeekOffDay())
 				.build();
 	}
 
@@ -78,10 +98,6 @@ public class SchoolServiceImpl implements SchoolService{
 					if(schoolRepo.existsByIsDeleted(false)) {
 						throw new SchoolAlreadyPresentException("school already exist");
 					}
-
-					DayOfWeek weekOffDay = DayOfWeek.valueOf(schoolRequest.getWeekOffDay().toUpperCase());
-					if(!EnumSet.allOf(DayOfWeek.class).contains(weekOffDay))
-						throw new InvalidWeekDayException("invalid week day");
 
 					user.setSchool(null);
 
@@ -117,9 +133,6 @@ public class SchoolServiceImpl implements SchoolService{
 
 		return schoolRepo.findById(schoolId)
 				.map(school -> {
-					DayOfWeek weekOffDay = DayOfWeek.valueOf(schoolRequest.getWeekOffDay().toUpperCase());
-					if(!EnumSet.allOf(DayOfWeek.class).contains(weekOffDay))
-						throw new InvalidWeekDayException("invalid week day");
 
 					school = mapToSchool(schoolRequest);
 					school.setSchoolId(school.getSchoolId());
@@ -166,19 +179,7 @@ public class SchoolServiceImpl implements SchoolService{
 				.orElseThrow(() -> new SchoolNotFoundException("school not found"));
 	}
 
-	@Transactional
-	public void hardDeleteSchool() {
-		
-		schoolRepo.findByIsDeleted(true).forEach(school -> {
-			
-			academicProgramRepository.deleteAll(school.getListOfAcademicPrograms());
-			
-			userRepo.deleteAll(userRepo.findBySchool(school));
-			
-			schoolRepo.delete(school);
-		});
-		
-	}
+	
 
 
 }

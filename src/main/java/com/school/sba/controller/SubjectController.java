@@ -17,6 +17,8 @@ import com.school.sba.responsedto.SubjectResponse;
 import com.school.sba.service.SubjectService;
 import com.school.sba.util.ResponseStructure;
 
+import jakarta.validation.Valid;
+
 @RestController
 public class SubjectController {
 	
@@ -24,10 +26,10 @@ public class SubjectController {
 	private SubjectService subjectService;
 	
 	
-	@PreAuthorize("hasAuthority('ADMIN')")
+	@PreAuthorize("hasAuthority('TEACHER')")
 	@PostMapping("/academic-programs/{programId}/subjects")
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> addSubject(@PathVariable("programId") int programId,
-			@RequestBody SubjectRequest subjectRequest){
+			@RequestBody @Valid SubjectRequest subjectRequest){
 		return subjectService.addSubject(programId, subjectRequest);
 	}
 	

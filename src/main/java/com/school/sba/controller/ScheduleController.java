@@ -15,6 +15,8 @@ import com.school.sba.responsedto.ScheduleResponse;
 import com.school.sba.service.ScheduleService;
 import com.school.sba.util.ResponseStructure;
 
+import jakarta.validation.Valid;
+
 @RestController
 public class ScheduleController {
 
@@ -24,7 +26,7 @@ public class ScheduleController {
 	@PreAuthorize("hasAuthority('ADMIN')")
 	@PostMapping("/schools/{schoolId}/schedules")
 	public ResponseEntity<ResponseStructure<ScheduleResponse>> saveSchedule(@PathVariable("schoolId") int schoolId,
-			@RequestBody ScheduleRequest scheduleRequest) {
+			@RequestBody @Valid ScheduleRequest scheduleRequest) {
 		return scheduleService.saveSchedule(schoolId, scheduleRequest);
 	}
 	
@@ -33,11 +35,10 @@ public class ScheduleController {
 		return scheduleService.findSchedule(schoolId);
 	}
 	
-	// validation should be performed on the requests
 	@PreAuthorize("hasAuthority('ADMIN')")
 	@PutMapping("schedules/{scheduleId}")
 	public ResponseEntity<ResponseStructure<ScheduleResponse>> updateSchedule(@PathVariable("scheduleId") int scheduleId,
-			@RequestBody ScheduleRequest scheduleRequest){
+			@RequestBody @Valid ScheduleRequest scheduleRequest){
 		return scheduleService.updateSchedule(scheduleId, scheduleRequest);
 	}
 

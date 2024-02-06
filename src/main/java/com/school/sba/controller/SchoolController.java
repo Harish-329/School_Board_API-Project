@@ -16,6 +16,8 @@ import com.school.sba.responsedto.SchoolResponse;
 import com.school.sba.service.SchoolService;
 import com.school.sba.util.ResponseStructure;
 
+import jakarta.validation.Valid;
+
 @RestController
 public class SchoolController {
 	
@@ -24,13 +26,13 @@ public class SchoolController {
 		
 	@PreAuthorize("hasAuthority('ADMIN')")
 	@PostMapping("/users/schools")
-	public ResponseEntity<ResponseStructure<SchoolResponse>> createSchool( @RequestBody SchoolRequest schoolRequest){
+	public ResponseEntity<ResponseStructure<SchoolResponse>> createSchool( @RequestBody @Valid SchoolRequest schoolRequest){
 		return schoolService.createSchool(schoolRequest);
 	}
 	
 	@PreAuthorize("hasAuthority('ADMIN')")
 	@PutMapping("/schools/{schoolId}")
-	public ResponseEntity<ResponseStructure<SchoolResponse>> updateSchool(@PathVariable("schoolId") int schoolId, @RequestBody SchoolRequest schoolRequest){
+	public ResponseEntity<ResponseStructure<SchoolResponse>> updateSchool(@PathVariable("schoolId") int schoolId, @RequestBody @Valid SchoolRequest schoolRequest){
 		return schoolService.updateSchool(schoolId, schoolRequest);
 	}
 	
@@ -39,7 +41,7 @@ public class SchoolController {
 		return schoolService.findSchool(schoolId);
 	}
 	
-	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@DeleteMapping("/schools/{schoolId}")
 	public ResponseEntity<ResponseStructure<SchoolResponse>> softDeleteSchool(@PathVariable("schoolId") int schoolId){
 		return schoolService.softDeleteSchool(schoolId);
