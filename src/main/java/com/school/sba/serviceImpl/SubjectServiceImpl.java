@@ -1,6 +1,7 @@
 package com.school.sba.serviceImpl;
 
 import java.util.ArrayList;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +11,8 @@ import org.springframework.stereotype.Service;
 
 import com.school.sba.entity.Subject;
 import com.school.sba.exception.AcademicProgramNotFoundException;
-import com.school.sba.repository.AcademicProgramRepository;
-import com.school.sba.repository.SubjectRepository;
+import com.school.sba.Repository.AcademicProgramRepository;
+import com.school.sba.Repository.SubjectRepository;
 import com.school.sba.requestdto.SubjectRequest;
 import com.school.sba.responsedto.AcademicProgramResponse;
 import com.school.sba.responsedto.SubjectResponse;

@@ -1,6 +1,8 @@
 package com.school.sba.serviceImpl;
 
 import java.io.ByteArrayOutputStream;
+
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.DayOfWeek;
@@ -42,10 +44,10 @@ import com.school.sba.exception.ScheduleNotFoundException;
 import com.school.sba.exception.SubjectNotAssignedToTeacherException;
 import com.school.sba.exception.SubjectNotFoundException;
 import com.school.sba.exception.TeacherNotFoundByIdException;
-import com.school.sba.repository.AcademicProgramRepository;
-import com.school.sba.repository.ClassHourRepository;
-import com.school.sba.repository.SubjectRepository;
-import com.school.sba.repository.UserRepository;
+import com.school.sba.Repository.AcademicProgramRepository;
+import com.school.sba.Repository.ClassHourRepository;
+import com.school.sba.Repository.SubjectRepository;
+import com.school.sba.Repository.UserRepository;
 import com.school.sba.requestdto.ClassHourRequest;
 import com.school.sba.requestdto.ExcelRequest;
 import com.school.sba.responsedto.ClassHourResponse;
@@ -189,27 +191,21 @@ public class ClassHourServiceImpl implements ClassHourService {
 		return academicProgramRepository.findById(programId).map(academicProgram -> {
 			List<ClassHour> listOfClassHours = academicProgram.getListOfClassHours();
 
-			if (listOfClassHours.isEmpty()) {
-				System.out.println(1);
+			if(listOfClassHours.isEmpty())
 				listOfClassHours = generateClassHour(academicProgram);
-			}
+			//			else if(listOfClassHours.getFirst().)
+			//			throw new ClassHourAlreadyGeneratedException("class hour already generated");
 			else {
-				if (classHourRepository
-						.findByClassBeginsAtAfter(LocalDateTime.now().with(LocalTime.MIDNIGHT))
-						.isEmpty()) {
-					System.out.println(2);
-					listOfClassHours = generateClassHour(academicProgram);
-				}
-				else {
-					System.out.println(3);
-					throw new ClassHourAlreadyGeneratedException("class hour is already generated for the week");
+				for(ClassHour cl : listOfClassHours) {
+					if(!cl.getClassBeginsAt().toLocalDate().isEqual(LocalDate.now())) {
+						listOfClassHours = generateClassHour(academicProgram);
+					}
 				}
 			}
 
 			listOfClassHours = classHourRepository.saveAll(listOfClassHours);
 
-			return ResponseEntityProxy.setResponseStructure(HttpStatus.CREATED,
-					"class hour generated successfully",
+			return ResponseEntityProxy.setResponseStructure(HttpStatus.CREATED, "class hour generated successfully",
 					mapToClassHourResponse(listOfClassHours));
 
 		}).orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));
@@ -256,25 +252,22 @@ public class ClassHourServiceImpl implements ClassHourService {
 								classHour.setClassRoomNumber(classHourRequest.getClassRoomNumber());
 								classHour.setSubject(subject);
 								classHour.setClassStatus(ClassStatus.ONGOING);
-							} 
-							else if (currentDateTime.isBefore(classBeginsAt)) {
+							} else if (currentDateTime.isBefore(classBeginsAt)) {
 								classHour.setUser(teacher);
 								classHour.setClassRoomNumber(classHourRequest.getClassRoomNumber());
 								classHour.setSubject(subject);
 								classHour.setClassStatus(ClassStatus.UPCOMING);
-							} 
-							else {
+							} else {
 								classHour.setUser(teacher);
 								classHour.setClassRoomNumber(classHourRequest.getClassRoomNumber());
 								classHour.setSubject(subject);
 								classHour.setClassStatus(ClassStatus.COMPLETED);
 							}
-							
 							listOfClassHour.add(classHour);
 							classHourRepository.save(classHour);
-							
 						} else {
-							throw new ClassCannotAssignedException("class hour cannot be assiged to break time or lunch time");
+							throw new ClassCannotAssignedException(
+									"class hour cannot be assiged to break time or lunch time");
 						}
 					} else {
 						throw new AcademicProgramNotAssignedException("academic program not assigned");
@@ -291,6 +284,7 @@ public class ClassHourServiceImpl implements ClassHourService {
 				mapToClassHourResponse(listOfClassHour));
 	}
 
+
 	@Override
 	public ResponseEntity<ResponseStructure<List<ClassHourResponse>>> generateClassHourForNextWeek(int programId) {
 
@@ -302,9 +296,7 @@ public class ClassHourServiceImpl implements ClassHourService {
 			if (endDayOfPreviousWeek == null)
 				throw new PreviousClassHourNotFoundException("previous class hour not found");
 
-			if (!classHourRepository
-					.findByClassBeginsAtAfter(LocalDateTime.now().with(LocalTime.MIDNIGHT).plusWeeks(1).minusDays(1))
-					.isEmpty())
+			if(!classHourRepository.findByClassBeginsAtAfter(LocalDateTime.now().with(LocalTime.MIDNIGHT).plusWeeks(1).minusDays(1)).isEmpty())
 				throw new ClassHourAlreadyGeneratedException("class hour is already generated for the week");
 
 			classHourRepository.findByClassBeginsAtAfter(endDayOfPreviousWeek.minusDays(6)).forEach(classHour -> {
@@ -325,88 +317,31 @@ public class ClassHourServiceImpl implements ClassHourService {
 
 	public void classHourGen(int programId, LocalDateTime now) {
 
-		if (!classHourRepository.existsByClassBeginsAt(
-				now.with(academicProgramRepository.findById(programId).get().getSchool().getSchedule().getOpensAt()))) {
+		if (!classHourRepository.existsByClassBeginsAt(now
+				.with(academicProgramRepository.findById(programId).get()
+						.getSchool()
+						.getSchedule().getOpensAt()))) {
 			generateClassHourForNextWeek(programId);
 		}
 	}
 
-	// works if the application is standalone application
 	@Override
 	public ResponseEntity<ResponseStructure<String>> writeExcelSheet(int programId, ExcelRequest excelRequest) {
 
-		return academicProgramRepository.findById(programId).map(academicProgram -> {
-			List<ClassHour> listOfClassHours = classHourRepository.findByAcademicProgramsAndClassBeginsAtBetween(
-					academicProgram, excelRequest.getFromDate().atStartOfDay(),
-					excelRequest.getToDate().plusDays(1).atStartOfDay());
+		return academicProgramRepository.findById(programId)
+				.map(academicProgram -> {
+					List<ClassHour> listOfClassHours = classHourRepository.
+							findByAcademicProgramsAndClassBeginsAtBetween(academicProgram, 
+									excelRequest.getFromDate().atStartOfDay(),
+									excelRequest.getToDate().plusDays(1).atStartOfDay());
 
-			String newPath = excelRequest.getFilePath().concat("\\test.xlsx");
+					String newPath = excelRequest.getFilePath().concat("\\test.xlsx");
 
-			XSSFWorkbook workbook = new XSSFWorkbook();
-			XSSFSheet sheet = workbook.createSheet();
+					XSSFWorkbook workbook = new XSSFWorkbook();
+					XSSFSheet sheet = workbook.createSheet();
 
-			int rowIndex = 0;
-			XSSFRow header = sheet.createRow(rowIndex);
-			header.createCell(0).setCellValue("Date");
-			header.createCell(1).setCellValue("Begin Time");
-			header.createCell(2).setCellValue("End Time");
-			header.createCell(3).setCellValue("Subject");
-			header.createCell(4).setCellValue("Teacher");
-			header.createCell(5).setCellValue("Room number");
-
-			DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-			DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-			for (ClassHour classHour : listOfClassHours) {
-
-				String subjectName = "NOT ASSIGNED";
-				String username = "NOT ASSIGNED";
-
-				if (classHour.getSubject() != null)
-					subjectName = classHour.getSubject().getSubjectName();
-				if (classHour.getUser() != null)
-					username = classHour.getUser().getUserName();
-
-				XSSFRow row = sheet.createRow(++rowIndex);
-				row.createCell(0).setCellValue(dateFormatter.format(classHour.getClassBeginsAt()));
-				row.createCell(1).setCellValue(timeFormatter.format(classHour.getClassBeginsAt()));
-				row.createCell(2).setCellValue(timeFormatter.format(classHour.getClassEndsAt()));
-				row.createCell(3).setCellValue(subjectName);
-				row.createCell(4).setCellValue(username);
-				row.createCell(5).setCellValue(classHour.getClassRoomNumber());
-			}
-
-			try {
-				workbook.write(new FileOutputStream(newPath));
-				workbook.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			return ResponseEntityProxy.setResponseStructure(HttpStatus.CREATED, "success", "suceessful");
-		}).orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));
-	}
-
-	
-	// works if the application is a web application
-	@Override
-	public ResponseEntity<?> writeToExcel(int programId, LocalDate fromDate, LocalDate toDate, MultipartFile file) {
-
-		return academicProgramRepository.findById(programId).map(academicProgram -> {
-			List<ClassHour> listOfClassHours = classHourRepository.findByAcademicProgramsAndClassBeginsAtBetween(
-					academicProgram, fromDate.atStartOfDay(), toDate.plusDays(1).atStartOfDay());
-
-			byte[] byteArray = null;
-			XSSFWorkbook workbook;
-			try {
-				workbook = new XSSFWorkbook(file.getInputStream());
-
-				DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-				DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-				workbook.forEach(sheet -> {
 					int rowIndex = 0;
-					Row header = sheet.createRow(rowIndex);
+					XSSFRow header = sheet.createRow(rowIndex);
 					header.createCell(0).setCellValue("Date");
 					header.createCell(1).setCellValue("Begin Time");
 					header.createCell(2).setCellValue("End Time");
@@ -414,17 +349,21 @@ public class ClassHourServiceImpl implements ClassHourService {
 					header.createCell(4).setCellValue("Teacher");
 					header.createCell(5).setCellValue("Room number");
 
-					for (ClassHour classHour : listOfClassHours) {
+					DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+					DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+					for(ClassHour classHour : listOfClassHours) {
 
 						String subjectName = "NOT ASSIGNED";
 						String username = "NOT ASSIGNED";
 
-						if (classHour.getSubject() != null)
+						if(classHour.getSubject() != null)
 							subjectName = classHour.getSubject().getSubjectName();
-						if (classHour.getUser() != null)
+						if(classHour.getUser() != null)
 							username = classHour.getUser().getUserName();
 
-						Row row = sheet.createRow(++rowIndex);
+
+						XSSFRow row = sheet.createRow(++rowIndex);
 						row.createCell(0).setCellValue(dateFormatter.format(classHour.getClassBeginsAt()));
 						row.createCell(1).setCellValue(timeFormatter.format(classHour.getClassBeginsAt()));
 						row.createCell(2).setCellValue(timeFormatter.format(classHour.getClassEndsAt()));
@@ -432,23 +371,91 @@ public class ClassHourServiceImpl implements ClassHourService {
 						row.createCell(4).setCellValue(username);
 						row.createCell(5).setCellValue(classHour.getClassRoomNumber());
 
+					}			
+
+					try {
+						workbook.write(new FileOutputStream(newPath));
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-				});
 
-				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-				workbook.write(outputStream);
-				workbook.close();
+					return ResponseEntityProxy.setResponseStructure(HttpStatus.CREATED,
+							"success",
+							"suceessful");
+				})
+				.orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));		
+	}
 
-				byteArray = outputStream.toByteArray();
+	@Override
+	public ResponseEntity<?> writeToExcel(int programId, LocalDate fromDate, LocalDate toDate, MultipartFile file) {
 
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		return academicProgramRepository.findById(programId)
+				.map(academicProgram -> {
+					List<ClassHour> listOfClassHours = classHourRepository.
+							findByAcademicProgramsAndClassBeginsAtBetween(academicProgram, 
+									fromDate.atStartOfDay(),
+									toDate.plusDays(1).atStartOfDay());
 
-			return ResponseEntity.ok()
-					.header("content Disposition", "attachment; filename=" + file.getOriginalFilename())
-					.contentType(MediaType.APPLICATION_OCTET_STREAM).body(byteArray);
-		}).orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));
+					String path = "E:\test_excel\\"+file.getOriginalFilename();
+					byte[] byteArray = null;
+					XSSFWorkbook workbook;
+					try {
+						workbook = new XSSFWorkbook(file.getInputStream());
+
+
+						DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+						DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+						workbook.forEach(sheet -> {
+							int rowIndex = 0;
+							Row header = sheet.createRow(rowIndex);
+							header.createCell(0).setCellValue("Date");
+							header.createCell(1).setCellValue("Begin Time");
+							header.createCell(2).setCellValue("End Time");
+							header.createCell(3).setCellValue("Subject");
+							header.createCell(4).setCellValue("Teacher");
+							header.createCell(5).setCellValue("Room number");
+
+							for(ClassHour classHour : listOfClassHours) {
+
+								String subjectName = "NOT ASSIGNED";
+								String username = "NOT ASSIGNED";
+
+								if(classHour.getSubject() != null)
+									subjectName = classHour.getSubject().getSubjectName();
+								if(classHour.getUser() != null)
+									username = classHour.getUser().getUserName();
+
+
+								Row row = sheet.createRow(++rowIndex);
+								row.createCell(0).setCellValue(dateFormatter.format(classHour.getClassBeginsAt()));
+								row.createCell(1).setCellValue(timeFormatter.format(classHour.getClassBeginsAt()));
+								row.createCell(2).setCellValue(timeFormatter.format(classHour.getClassEndsAt()));
+								row.createCell(3).setCellValue(subjectName);
+								row.createCell(4).setCellValue(username);
+								row.createCell(5).setCellValue(classHour.getClassRoomNumber());
+
+							}
+
+						});
+
+						ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+						workbook.write(outputStream);
+						workbook.write(new FileOutputStream(path));
+						workbook.close();
+
+						byteArray = outputStream.toByteArray();
+
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+					return ResponseEntity.ok()
+							.header("Content Disposition", "attachment; filename="+file.getOriginalFilename())
+							.contentType(MediaType.APPLICATION_OCTET_STREAM)
+							.body(byteArray);
+				})
+				.orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));
 
 	}
 

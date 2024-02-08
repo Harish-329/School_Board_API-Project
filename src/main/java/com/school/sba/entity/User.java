@@ -34,16 +34,16 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer userId;
 	
-	@Column(unique = true)
+//	@Column(unique = true)
 	private String userName;
 	private String userPassword;
 	private String userFirstName;
 	private String userLastName;
 	
-	@Column(unique = true)
+//	@Column(unique = true)
 	private Long userContact;
 	
-	@Column(unique = true)
+//	@Column(unique = true)
 	private String userEmail;
 	
 	private boolean isDeleted;

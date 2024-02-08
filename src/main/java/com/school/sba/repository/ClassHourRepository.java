@@ -1,4 +1,4 @@
-package com.school.sba.repository;
+package com.school.sba.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;

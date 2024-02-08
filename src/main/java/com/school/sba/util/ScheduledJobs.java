@@ -2,15 +2,13 @@ package com.school.sba.util;
 
 import java.time.LocalDateTime;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.school.sba.repository.AcademicProgramRepository;
-import com.school.sba.serviceImpl.AcademicProgramServiceImpl;
-import com.school.sba.serviceImpl.ClassHourServiceImpl;
-import com.school.sba.serviceImpl.SchoolServiceImpl;
-import com.school.sba.serviceImpl.UserServiceImpl;
+import com.school.sba.Repository.AcademicProgramRepository;
+import com.school.sba.serviceImpl.*;
 
 @Component
 public class ScheduledJobs {

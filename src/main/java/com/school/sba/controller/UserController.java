@@ -27,7 +27,7 @@ public class UserController {
 	private UserService userService;
 
 	@PostMapping("/users/register")
-	public ResponseEntity<ResponseStructure<UserResponse>> registerAdmin(@Valid @RequestBody UserRequest userRequest) {
+	public ResponseEntity<ResponseStructure<UserResponse>> registerAdmin(@RequestBody @Valid UserRequest userRequest) {
 		return userService.registerAdmin(userRequest);
 	}
 
@@ -69,7 +69,6 @@ public class UserController {
 		return userService.assignSubjectToTeacher(subjectId, userId);
 	}
 
-	@PreAuthorize("hasAuthority('ADMIN') OR hasAuthority('TEACHER')")
 	@GetMapping("/academic-programs/{programId}/user-roles/{role}/users")
 	public ResponseEntity<ResponseStructure<List<UserResponse>>> findAllByRole(@PathVariable("programId") int programId,
 			@PathVariable("role") String userRole) {

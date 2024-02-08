@@ -1,6 +1,7 @@
 package com.school.sba.serviceImpl;
 
 import java.util.ArrayList;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,10 +26,10 @@ import com.school.sba.exception.NoAssociatedObjectsFoundException;
 import com.school.sba.exception.OnlyTeacherCanBeAssignedToSubjectException;
 import com.school.sba.exception.SubjectNotFoundException;
 import com.school.sba.exception.UserNotFoundByIdException;
-import com.school.sba.repository.AcademicProgramRepository;
-import com.school.sba.repository.ClassHourRepository;
-import com.school.sba.repository.SubjectRepository;
-import com.school.sba.repository.UserRepository;
+import com.school.sba.Repository.AcademicProgramRepository;
+import com.school.sba.Repository.ClassHourRepository;
+import com.school.sba.Repository.SubjectRepository;
+import com.school.sba.Repository.UserRepository;
 import com.school.sba.requestdto.UserRequest;
 import com.school.sba.responsedto.UserResponse;
 import com.school.sba.service.UserService;
@@ -54,25 +55,6 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private ClassHourRepository classHourRepository;
-	
-	@Transactional
-	public void hardDeleteUser() {
-		
-		userRepository.findByIsDeleted(true).forEach(user -> {
-			
-			user.getListOfAcademicPrograms().forEach(ap -> {
-				ap.setListOfUsers(null);
-			});
-			
-			classHourRepository.findByUser(user).forEach(classHour -> {
-				classHour.setUser(null);
-			});
-			
-			userRepository.delete(user);
-			
-		});
-		
-	}
 
 	private User mapToUser(UserRequest userRequest) {
 		return User.builder().userName(userRequest.getUserName())
@@ -80,7 +62,7 @@ public class UserServiceImpl implements UserService {
 				.userFirstName(userRequest.getUserFirstName())
 				.userLastName(userRequest.getUserLastName())
 				.userEmail(userRequest.getUserEmail())
-				.userContact(Long.parseLong(userRequest.getUserContact()))
+				.userContact(userRequest.getUserContact())
 				.userRole(UserRole.valueOf(userRequest.getUserRole().toUpperCase()))
 				.build();
 	}
@@ -356,6 +338,23 @@ public class UserServiceImpl implements UserService {
 				.orElseThrow(() -> new AcademicProgramNotFoundException("academic program not found"));
 	}
 
-	
+	@Transactional
+	public void hardDeleteUser() {
+		
+		userRepository.findByIsDeleted(true).forEach(user -> {
+			
+			user.getListOfAcademicPrograms().forEach(ap -> {
+				ap.setListOfUsers(null);
+			});
+			
+			classHourRepository.findByUser(user).forEach(classHour -> {
+				classHour.setUser(null);
+			});
+			
+			userRepository.delete(user);
+			
+		});
+		
+	}
 
 }

@@ -1,6 +1,7 @@
 package com.school.sba.serviceImpl;
 
 import java.time.Duration;
+
 import java.time.LocalTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,8 @@ import com.school.sba.exception.InvalidLunchTimeException;
 import com.school.sba.exception.ScheduleAlreadyPresentException;
 import com.school.sba.exception.ScheduleNotFoundException;
 import com.school.sba.exception.SchoolNotFoundException;
-import com.school.sba.repository.ScheduleRepository;
-import com.school.sba.repository.SchoolRepository;
+import com.school.sba.Repository.ScheduleRepository;
+import com.school.sba.Repository.SchoolRepository;
 import com.school.sba.requestdto.ScheduleRequest;
 import com.school.sba.responsedto.ScheduleResponse;
 import com.school.sba.service.ScheduleService;
