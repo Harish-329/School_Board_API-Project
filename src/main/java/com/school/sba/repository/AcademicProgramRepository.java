@@ -1,4 +1,4 @@
-package com.school.sba.Repository;
+package com.school.sba.repository;
 
 import java.util.List;
 

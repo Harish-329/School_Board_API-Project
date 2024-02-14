@@ -2,7 +2,6 @@ package com.school.sba.serviceImpl;
 
 import java.util.List;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +15,10 @@ import com.school.sba.exception.SchoolAlreadyPresentException;
 import com.school.sba.exception.SchoolCannotBeCreatedException;
 import com.school.sba.exception.SchoolNotFoundException;
 import com.school.sba.exception.UserNotFoundByIdException;
-import com.school.sba.Repository.AcademicProgramRepository;
-import com.school.sba.Repository.ClassHourRepository;
-import com.school.sba.Repository.SchoolRepository;
-import com.school.sba.Repository.UserRepository;
+import com.school.sba.repository.AcademicProgramRepository;
+import com.school.sba.repository.ClassHourRepository;
+import com.school.sba.repository.SchoolRepository;
+import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.SchoolRequest;
 import com.school.sba.responsedto.SchoolResponse;
 import com.school.sba.service.SchoolService;
@@ -43,12 +42,35 @@ public class SchoolServiceImpl implements SchoolService{
 
 	@Autowired
 	private AcademicProgramRepository academicProgramRepository;
+	
+	@Transactional
+	public void hardDeleteSchool() {
+		
+		schoolRepo.findByIsDeleted(true).forEach(school -> {
+			
+			List<AcademicProgram> listOfAcademicPrograms = school.getListOfAcademicPrograms();
+			
+			listOfAcademicPrograms.forEach(academicProgram -> {
+				classHourRepository.deleteAll(academicProgram.getListOfClassHours());
+				academicProgramRepository.delete(academicProgram);
+			});
+			
+			userRepo.findBySchool(school).forEach(user -> {
+				if(!user.getUserRole().equals(UserRole.ADMIN)) {
+					userRepo.delete(user);
+				}
+			});
+			
+			schoolRepo.delete(school);
+		});
+		
+	}
 
 	private School mapToSchool(SchoolRequest schoolRequest) {
 		return School.builder()
 				.schoolName(schoolRequest.getSchoolName())
 				.schoolEmailId(schoolRequest.getSchoolEmailId())
-				.schoolContactNumber(schoolRequest.getSchoolContactNumber())
+				.schoolContactNumber(Long.parseLong(schoolRequest.getSchoolContactNumber()))
 				.schoolAddress(schoolRequest.getSchoolAddress())
 				.build();
 	}
@@ -157,28 +179,7 @@ public class SchoolServiceImpl implements SchoolService{
 				.orElseThrow(() -> new SchoolNotFoundException("school not found"));
 	}
 
-	@Transactional
-	public void hardDeleteSchool() {
-		
-		schoolRepo.findByIsDeleted(true).forEach(school -> {
-			
-			List<AcademicProgram> listOfAcademicPrograms = school.getListOfAcademicPrograms();
-			
-			listOfAcademicPrograms.forEach(academicProgram -> {
-				classHourRepository.deleteAll(academicProgram.getListOfClassHours());
-				academicProgramRepository.delete(academicProgram);
-			});
-			
-			userRepo.findBySchool(school).forEach(user -> {
-				if(!user.getUserRole().equals(UserRole.ADMIN)) {
-					userRepo.delete(user);
-				}
-			});
-			
-			schoolRepo.delete(school);
-		});
-		
-	}
+	
 
 
 }

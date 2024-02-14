@@ -29,11 +29,11 @@ public class School {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int schoolId;
 	private String schoolName;
-//	@Column(unique = true)
+	@Column(unique = true)
 	private long schoolContactNumber;
-//	@Column(unique = true)
+	@Column(unique = true)
 	private String schoolEmailId;
-//	@Column(unique = true)
+	@Column(unique = true)
 	private String schoolAddress;
 	
 	private boolean isDeleted;

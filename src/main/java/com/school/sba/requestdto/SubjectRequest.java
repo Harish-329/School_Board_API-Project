@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class SubjectRequest {
 	
-//	@NotEmpty(message = "list of subject names should contain data, it should not be empty")
+	@NotEmpty(message = "list of subject names should contain data, it should not be empty")
 	private List<String> subjectNames;
 	
 }

@@ -17,4 +17,8 @@ public interface AcademicProgramService {
 
 	ResponseEntity<ResponseStructure<AcademicProgramResponse>> softDeleteAcademicProgram(int programId);
 
+	ResponseEntity<ResponseStructure<AcademicProgramResponse>> getAcademicProgram(int programId);
+
+	ResponseEntity<ResponseStructure<AcademicProgramResponse>> autoGenerateButton(int programId);
+
 }

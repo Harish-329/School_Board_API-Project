@@ -26,7 +26,7 @@ public class SubjectController {
 	private SubjectService subjectService;
 	
 	
-	@PreAuthorize("hasAuthority('ADMIN')")
+	@PreAuthorize("hasAuthority('TEACHER')")
 	@PostMapping("/academic-programs/{programId}/subjects")
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> addSubject(@PathVariable("programId") int programId,
 			@RequestBody @Valid SubjectRequest subjectRequest){
